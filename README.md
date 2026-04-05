@@ -73,3 +73,94 @@ The module operates **after CAPE analysis completes**, without modifying the san
 ---
 
 ## 🏗️ Architecture
+CAPE Analysis Pipeline
+│
+▼
+┌──────────────────────────────┐
+│ CAPE Results (raw JSON) │
+└──────────────┬───────────────┘
+▼
+┌──────────────────────────────┐
+│ Normalizer (denoise & reduce)│
+└──────────────┬───────────────┘
+▼
+┌──────────────────────────────┐
+│ Heuristics Engine │
+│ (rule-based signals) │
+└──────────────┬───────────────┘
+▼
+┌──────────────────────────────┐
+│ Prompt Builder │
+└──────────────┬───────────────┘
+▼
+┌──────────────────────────────┐
+│ LLM Client (OpenAI API) │
+└──────────────┬───────────────┘
+▼
+┌──────────────────────────────┐
+│ Postprocess & Schema Guard │
+└──────────────┬───────────────┘
+▼
+┌──────────────────────────────┐
+│ Output │
+│ - llm_summary.json │
+│ - llm_summary.md │
+└──────────────────────────────┘
+
+---
+
+## 📂 Project Structure
+CAPE-LLM-Assessment/
+├── modules/
+│ └── reporting/
+│ └── llm_assessment.py
+├── lib/
+│ └── cuckoo/
+│ └── common/
+│ └── llm/
+│ ├── client.py
+│ ├── normalizer.py
+│ ├── heuristics.py
+│ ├── prompt_builder.py
+│ ├── schema.py
+│ ├── postprocess.py
+│ └── utils.py
+├── conf/
+│ └── default/
+│ └── reporting.conf.default
+├── tests/
+│ └── test_llm_assessment.py
+└── docs/
+└── llm_assessment.md
+
+---
+
+## ⚙️ Installation & Integration
+
+### 1. Copy Files into CAPE
+
+```bash
+cp -r modules/reporting/* <CAPE>/modules/reporting/
+cp -r lib/cuckoo/common/llm <CAPE>/lib/cuckoo/common/
+
+### 2. Update CAPE Configuration
+[llm_assessment]
+enabled = yes
+provider = openai_compatible
+endpoint = http://127.0.0.1:8001/v1/chat/completions
+api_key =
+model = qwen2.5-72b-instruct
+timeout = 120
+verify_tls = yes
+temperature = 0
+max_tokens = 2200
+store_markdown = yes
+attach_to_results = no
+system_prompt_version = v1
+### 3. Start LLM Service
+curl http://127.0.0.1:8001/v1/chat/completions
+### 4. Run CAPE Analysis
+Outputs will be generated in:
+storage/analyses/<task_id>/reports/
+llm_summary.json
+llm_summary.md
